@@ -19,8 +19,14 @@ def get_words(text: str) -> list[str]:
     return re.findall(r"[a-zA-Zа-яА-ЯёЁ0-9]+", text.lower())
 
 
+def count_sentences(text: str) -> int:
+    sentences = re.findall(r"[^.!?]+[.!?]+", text)
+    return len(sentences)
+
+
 def build_report(cleaned_text: str, input_file: Path) -> str:
     words = get_words(cleaned_text)
+    sentences_count = count_sentences(cleaned_text)
     word_counter = Counter(words)
 
     lines_count = len(cleaned_text.splitlines())
@@ -43,6 +49,7 @@ def build_report(cleaned_text: str, input_file: Path) -> str:
         "=" * 40,
         f"Исходный файл: {input_file}",
         f"Количество строк: {lines_count}",
+        f"Количество предложений: {sentences_count}",
         f"Количество слов: {words_count}",
         f"Средняя длина слова: {average_word_length}",
         f"Количество уникальных слов: {unique_words_count}",
