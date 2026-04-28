@@ -1,6 +1,5 @@
+from text_tools import clean_text, build_report
 from pathlib import Path
-from collections import Counter
-import re
 import argparse
 
 
@@ -37,64 +36,6 @@ def read_text(file_path: Path) -> str:
         raise FileNotFoundError(f"Файл не найден: {file_path}")
 
     return file_path.read_text(encoding="utf-8")
-
-
-def clean_text(text: str) -> str:
-    lines = text.splitlines()
-
-    cleaned_lines = []
-    for line in lines:
-        cleaned_line = " ".join(line.split())
-        if cleaned_line:
-            cleaned_lines.append(cleaned_line)
-
-    return "\n".join(cleaned_lines)
-
-
-def get_words(text: str) -> list[str]:
-    return re.findall(r"[a-zA-Zа-яА-ЯёЁ0-9]+", text.lower())
-
-
-def build_report(cleaned_text: str, input_file: Path) -> str:
-    words = get_words(cleaned_text)
-    word_counter = Counter(words)
-
-    lines_count = len(cleaned_text.splitlines())
-    words_count = len(words)
-    chars_count = len(cleaned_text)
-    unique_words_count = len(set(words))
-
-    if words:
-        longest_word = max(words, key=len)
-    else:
-        longest_word = ""
-
-    report_lines = [
-        "ОТЧЁТ ПО ТЕКСТУ",
-        "=" * 40,
-        f"Исходный файл: {input_file}",
-        f"Количество строк: {lines_count}",
-        f"Количество слов: {words_count}",
-        f"Количество уникальных слов: {unique_words_count}",
-        f"Самое длинное слово: {longest_word}",
-        f"Количество символов: {chars_count}",
-        "",
-        "Топ-10 частых слов:",
-    ]
-
-    for word, count in word_counter.most_common(10):
-        report_lines.append(f"{word}: {count}")
-
-    report_lines.extend(
-        [
-            "",
-            "Очищенный текст:",
-            "-" * 40,
-            cleaned_text,
-        ]
-    )
-
-    return "\n".join(report_lines)
 
 
 def save_report(report: str, file_path: Path) -> None:
