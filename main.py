@@ -1,10 +1,35 @@
 from pathlib import Path
 from collections import Counter
 import re
+import argparse
 
 
 INPUT_FILE = Path("sample.txt")
 OUTPUT_FILE = Path("report.txt")
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Создаёт отчёт по текстовому файлу"
+    )
+
+    parser.add_argument(
+        "input_file",
+        nargs="?",
+        default=INPUT_FILE,
+        type=Path,
+        help="Путь к входному текстовому файлу"
+    )
+
+    parser.add_argument(
+        "output_file",
+        nargs="?",
+        default=OUTPUT_FILE,
+        type=Path,
+        help="Путь к файлу отчёта"
+    )
+
+    return parser.parse_args()
 
 
 def read_text(file_path: Path) -> str:
@@ -30,7 +55,7 @@ def get_words(text: str) -> list[str]:
     return re.findall(r"[a-zA-Zа-яА-ЯёЁ0-9]+", text.lower())
 
 
-def build_report(cleaned_text: str) -> str:
+def build_report(cleaned_text: str, input_file: Path) -> str:
     words = get_words(cleaned_text)
     word_counter = Counter(words)
 
@@ -47,7 +72,7 @@ def build_report(cleaned_text: str) -> str:
     report_lines = [
         "ОТЧЁТ ПО ТЕКСТУ",
         "=" * 40,
-        f"Исходный файл: {INPUT_FILE}",
+        f"Исходный файл: {input_file}",
         f"Количество строк: {lines_count}",
         f"Количество слов: {words_count}",
         f"Количество уникальных слов: {unique_words_count}",
@@ -77,14 +102,16 @@ def save_report(report: str, file_path: Path) -> None:
 
 
 def main() -> None:
-    original_text = read_text(INPUT_FILE)
-    cleaned_text = clean_text(original_text)
-    report = build_report(cleaned_text)
+    args = parse_args()
 
-    save_report(report, OUTPUT_FILE)
+    original_text = read_text(args.input_file)
+    cleaned_text = clean_text(original_text)
+    report = build_report(cleaned_text, args.input_file)
+
+    save_report(report, args.output_file)
 
     print("Готово.")
-    print(f"Отчёт сохранён в файл: {OUTPUT_FILE}")
+    print(f"Отчёт сохранён в файл: {args.output_file}")
 
 
 if __name__ == "__main__":
