@@ -33,12 +33,18 @@ def build_report(cleaned_text: str, input_file: Path) -> str:
     else:
         longest_word = ""
 
+    if words:
+        average_word_length = round(sum(len(word) for word in words)/words_count,2)
+    else:
+        average_word_length = 0
+
     report_lines = [
         "ОТЧЁТ ПО ТЕКСТУ",
         "=" * 40,
         f"Исходный файл: {input_file}",
         f"Количество строк: {lines_count}",
         f"Количество слов: {words_count}",
+        f"Средняя длина слова: {average_word_length}",
         f"Количество уникальных слов: {unique_words_count}",
         f"Самое длинное слово: {longest_word}",
         f"Количество символов: {chars_count}",
