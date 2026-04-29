@@ -76,5 +76,8 @@ def build_report(cleaned_text: str, input_file: Path) -> str:
 
 def analyze_text(text: str, source_name: str = "text") -> str:
     cleaned_text = clean_text(text)
-    report = build_report(cleaned_text, Path(source_name))
-    return report
+
+    if not cleaned_text:
+        return "Текст пустой после очистки. Пришли сообщение с обычным текстом."
+
+    return build_report(cleaned_text, Path(source_name))

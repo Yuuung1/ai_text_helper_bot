@@ -49,5 +49,12 @@ class TextToolsTests(unittest.TestCase):
         self.assertIn("бот: 1", result)
 
 
+    def test_analyze_text_without_text(self):
+        source_text = "           "
+        result = analyze_text(source_text, source_name="test_source")
+
+        self.assertEqual(result,"Текст пустой после очистки. Пришли сообщение с обычным текстом.")
+
+
 if __name__ == "__main__":
     unittest.main()
