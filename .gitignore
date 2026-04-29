@@ -5,5 +5,8 @@ __pycache__/
 .idea/
 *.iml
 
+.env
+
 report.txt
 *_report.txt
+result.txt
