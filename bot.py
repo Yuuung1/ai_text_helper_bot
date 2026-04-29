@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-from text_tools import clean_text, build_report
+from text_tools import analyze_text
 
 
 load_dotenv()
@@ -44,8 +44,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 async def analyze_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_text = update.message.text
 
-    cleaned_text = clean_text(user_text)
-    report = build_report(cleaned_text, Path("telegram_message"))
+    report = analyze_text(user_text, "telegram_message")
 
     if len(report) > 3900:
         report = report[:3900] + "\n\n...Отчёт обрезан, потому что сообщение слишком длинное."

@@ -1,4 +1,4 @@
-from text_tools import clean_text, build_report
+from text_tools import analyze_text
 from pathlib import Path
 import argparse
 
@@ -46,8 +46,7 @@ def main() -> None:
     args = parse_args()
 
     original_text = read_text(args.input_file)
-    cleaned_text = clean_text(original_text)
-    report = build_report(cleaned_text, args.input_file)
+    report = analyze_text(original_text, source_name=str(args.input_file))
 
     save_report(report, args.output_file)
 

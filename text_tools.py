@@ -72,3 +72,9 @@ def build_report(cleaned_text: str, input_file: Path) -> str:
     )
 
     return "\n".join(report_lines)
+
+
+def analyze_text(text: str, source_name: str = "text") -> str:
+    cleaned_text = clean_text(text)
+    report = build_report(cleaned_text, Path(source_name))
+    return report

@@ -1,6 +1,6 @@
 import unittest
 
-from text_tools import clean_text, get_words, count_sentences
+from text_tools import clean_text, get_words, count_sentences, analyze_text
 
 
 class TextToolsTests(unittest.TestCase):
@@ -38,6 +38,15 @@ class TextToolsTests(unittest.TestCase):
         result = count_sentences(source_text)
 
         self.assertEqual(result, expected_result)
+
+    def test_analyze_text(self):
+        source_text = "Python Python бот."
+        result = analyze_text(source_text, "test_source")
+
+        self.assertIn("Исходный файл: test_source", result)
+        self.assertIn("Количество слов: 3", result)
+        self.assertIn("python: 2", result)
+        self.assertIn("бот: 1", result)
 
 
 if __name__ == "__main__":
