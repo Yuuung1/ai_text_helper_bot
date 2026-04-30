@@ -22,6 +22,17 @@ def get_bot_token() -> str:
     return token
 
 
+def limit_report_length(report: str, max_length: int = 3900) -> str:
+    if len(report) <= max_length:
+        return report
+
+    return (
+        report[:max_length]
+        + "\n\n...Отчёт обрезан, потому что сообщение слишком длинное."
+    )
+
+
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "Привет! Пришли мне текст, а я сделаю по нему отчёт: "
@@ -44,10 +55,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 async def analyze_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_text = update.message.text
 
-    report = analyze_text(user_text, "telegram_message")
-
-    if len(report) > 3900:
-        report = report[:3900] + "\n\n...Отчёт обрезан, потому что сообщение слишком длинное."
+    report = analyze_text(user_text, source_name="telegram_message")
+    report = limit_report_length(report)
 
     await update.message.reply_text(report)
 

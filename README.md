@@ -141,3 +141,13 @@ pip install -r requirements.txt
 ```env
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
 ```
+
+## Структура проекта
+
+- `main.py` — консольный запуск анализа текстового файла.
+- `bot.py` — Telegram-интерфейс.
+- `text_tools.py` — основная логика анализа текста.
+- `test_text_tools.py` — unit-тесты для функций анализа.
+- `requirements.txt` — зависимости проекта.
+- `.env.example` — пример файла с переменными окружения.
+- `.gitignore` — исключения для Git.
