@@ -126,3 +126,18 @@ python bot.py
 - `/start` — приветствие;
 - `/help` — инструкция;
 - обычное текстовое сообщение — отчёт по тексту.
+
+## Установка зависимостей
+
+После клонирования проекта создайте виртуальное окружение и установите зависимости:
+
+```bash
+python -m venv .venv
+pip install -r requirements.txt
+```
+
+Для запуска Telegram-бота также нужен файл `.env` с токеном:
+
+```env
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+```
