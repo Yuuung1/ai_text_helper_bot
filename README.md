@@ -78,7 +78,7 @@ python: 3
 Для запуска unit-тестов используется встроенный модуль `unittest`.
 
 ```bash
-python -m unittest test_text_tools.py
+python -m unittest
 ```
 
 Ожидаемый результат:
@@ -86,7 +86,7 @@ python -m unittest test_text_tools.py
 ```text
 ....
 ----------------------------------------------------------------------
-Ran 4 tests in 0.001s
+Ran n tests in 0.00ns
 
 OK
 ```
