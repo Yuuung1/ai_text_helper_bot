@@ -37,6 +37,23 @@ def build_summary_prompt(text: str) -> str:
     )
 
 
+def build_tasks_prompt(text: str) -> str:
+    return (
+        "Проанализируй текст на русском языке и выдели из него задачи, "
+        "договорённости, сроки и ответственных.\n\n"
+        "Формат ответа:\n"
+        "1. Краткий контекст — 1–2 предложения.\n"
+        "2. Задачи списком:\n"
+        "   - Задача: ...\n"
+        "     Ответственный: ... или 'не указан'\n"
+        "     Срок: ... или 'не указан'\n"
+        "3. Договорённости — отдельным списком.\n"
+        "4. Если задач нет, прямо напиши: 'Явных задач в тексте не найдено.'\n\n"
+        "Текст для анализа:\n"
+        f"{text}"
+    )
+
+
 def summarize_text(text: str) -> str:
     cleaned_text = text.strip()
 
@@ -60,6 +77,29 @@ def summarize_text(text: str) -> str:
     return response.text.strip()
 
 
+def extract_tasks(text: str) -> str:
+    cleaned_text = text.strip()
+
+    if not cleaned_text:
+        return "Текст для выделения задач пустой."
+
+    get_gemini_api_key()
+
+    client = genai.Client()
+    model = get_ai_model()
+    prompt = build_tasks_prompt(cleaned_text)
+
+    response = client.models.generate_content(
+        model=model,
+        contents=prompt,
+    )
+
+    if not response.text:
+        return "AI не вернул текстовый ответ."
+
+    return response.text.strip()
+
+
 def main() -> None:
     test_text = (
         "Сегодня на совещании обсудили запуск нового Telegram-бота. "
@@ -67,10 +107,10 @@ def main() -> None:
         "Также договорились хранить API-ключи только в .env и не коммитить их в GitHub."
     )
 
-    summary = summarize_text(test_text)
+    tasks = extract_tasks(test_text)
 
-    print("AI SUMMARY:")
-    print(summary)
+    print("AI TASKS:")
+    print(tasks)
 
 
 if __name__ == "__main__":
