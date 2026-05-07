@@ -151,3 +151,7 @@ TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
 - `requirements.txt` — зависимости проекта.
 - `.env.example` — пример файла с переменными окружения.
 - `.gitignore` — исключения для Git.
+
+Для работы AI-функций нужен Gemini API key.
+Ключ хранится локально в .env и не коммитится в GitHub.
+Для демо можно использовать бесплатный тариф Gemini API, но для production рекомендуется использовать отдельный ключ и контролировать лимиты.
