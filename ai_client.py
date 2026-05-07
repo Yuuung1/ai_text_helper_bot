@@ -54,18 +54,11 @@ def build_tasks_prompt(text: str) -> str:
     )
 
 
-def summarize_text(text: str) -> str:
-    cleaned_text = text.strip()
-
-    if not cleaned_text:
-        return "Текст для суммаризации пустой."
-
-    get_gemini_api_key()
+def generate_ai_response(prompt: str) -> str:
+    api_key = get_gemini_api_key()
 
     client = genai.Client()
     model = get_ai_model()
-    prompt = build_summary_prompt(cleaned_text)
-
     response = client.models.generate_content(
         model=model,
         contents=prompt,
@@ -73,8 +66,17 @@ def summarize_text(text: str) -> str:
 
     if not response.text:
         return "AI не вернул текстовый ответ."
-
     return response.text.strip()
+
+def summarize_text(text: str) -> str:
+    cleaned_text = text.strip()
+
+    if not cleaned_text:
+        return "Текст для суммаризации пустой."
+
+    prompt = build_summary_prompt(cleaned_text)
+
+    return generate_ai_response(prompt)
 
 
 def extract_tasks(text: str) -> str:
@@ -83,21 +85,10 @@ def extract_tasks(text: str) -> str:
     if not cleaned_text:
         return "Текст для выделения задач пустой."
 
-    get_gemini_api_key()
 
-    client = genai.Client()
-    model = get_ai_model()
     prompt = build_tasks_prompt(cleaned_text)
 
-    response = client.models.generate_content(
-        model=model,
-        contents=prompt,
-    )
-
-    if not response.text:
-        return "AI не вернул текстовый ответ."
-
-    return response.text.strip()
+    return generate_ai_response(prompt)
 
 
 def main() -> None:
