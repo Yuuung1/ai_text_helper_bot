@@ -3,8 +3,8 @@ import asyncio
 from pathlib import Path
 
 from dotenv import load_dotenv
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler
 
 from text_tools import analyze_text
 from ai_client import summarize_text, extract_tasks, rewrite_business_style
@@ -32,6 +32,24 @@ def limit_telegram_message(message_text: str, max_length: int = 3900) -> str:
         message_text[:max_length]
         + "\n\n...Сообщение обрезано, потому что оно слишком длинное."
     )
+
+
+def build_action_keyboard() -> InlineKeyboardMarkup:
+    keyboard = [
+        [
+            InlineKeyboardButton("📊 Статистика", callback_data="stats"),
+            InlineKeyboardButton("📝 Резюме", callback_data="summary"),
+        ],
+        [
+            InlineKeyboardButton("✅ Задачи", callback_data="tasks"),
+            InlineKeyboardButton("💼 Деловой стиль", callback_data="business"),
+        ],
+        [
+            InlineKeyboardButton("🔄 Новый текст", callback_data="new_text"),
+        ],
+    ]
+
+    return InlineKeyboardMarkup(keyboard)
 
 
 
@@ -157,12 +175,97 @@ async def business_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 
 async def analyze_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_text = update.message.text
+    user_text = (update.message.text or "").strip()
 
-    report = analyze_text(user_text, source_name="telegram_message")
-    report = limit_telegram_message(report)
+    if not user_text:
+        await update.message.reply_text(
+            "Текст пустой. Пришли сообщение, которое нужно обработать."
+        )
+        return
 
-    await update.message.reply_text(report)
+    context.user_data["last_text"] = user_text
+
+    await update.message.reply_text(
+        "Текст сохранён. Что сделать с ним?",
+        reply_markup=build_action_keyboard()
+    )
+
+
+async def action_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+
+    action = query.data
+
+    if action == "new_text":
+        await query.message.reply_text(
+            "Отправь новый текст следующим сообщением, и я снова покажу меню действий."
+        )
+        return
+
+    user_text = context.user_data.get("last_text")
+
+    if not user_text:
+        await query.message.reply_text(
+            "Сначала отправь текст, который нужно обработать."
+        )
+        return
+
+    if action == "stats":
+        result = analyze_text(user_text, source_name="telegram_message")
+
+    elif action == "summary":
+        await query.message.reply_text("Готовлю краткое резюме...")
+        try:
+            result = await asyncio.to_thread(summarize_text, user_text)
+        except RuntimeError as error:
+            await query.message.reply_text(f"Ошибка настройки AI: {error}")
+            return
+        except Exception as error:
+            print(f"AI error: {error}")
+            await query.message.reply_text(
+                "Не удалось получить ответ от AI. Попробуй позже."
+            )
+            return
+
+    elif action == "tasks":
+        await query.message.reply_text("Выделяю задачи и договорённости...")
+        try:
+            result = await asyncio.to_thread(extract_tasks, user_text)
+        except RuntimeError as error:
+            await query.message.reply_text(f"Ошибка настройки AI: {error}")
+            return
+        except Exception as error:
+            print(f"AI error: {error}")
+            await query.message.reply_text(
+                "Не удалось получить ответ от AI. Попробуй позже."
+            )
+            return
+
+    elif action == "business":
+        await query.message.reply_text("Переписываю текст в деловом стиле...")
+        try:
+            result = await asyncio.to_thread(rewrite_business_style, user_text)
+        except RuntimeError as error:
+            await query.message.reply_text(f"Ошибка настройки AI: {error}")
+            return
+        except Exception as error:
+            print(f"AI error: {error}")
+            await query.message.reply_text(
+                "Не удалось получить ответ от AI. Попробуй позже."
+            )
+            return
+
+    else:
+        await query.message.reply_text("Неизвестное действие.")
+        return
+
+    result = limit_telegram_message(result)
+
+    await query.message.reply_text(
+        result,
+        reply_markup=build_action_keyboard()
+    )
 
 
 def main() -> None:
@@ -185,6 +288,9 @@ def main() -> None:
     application.add_handler(CommandHandler("summary", summary_command))
     application.add_handler(CommandHandler("tasks", tasks_command))
     application.add_handler(CommandHandler("business", business_command))
+
+    application.add_handler(CallbackQueryHandler(action_button_handler))
+
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, analyze_text_message))
 
     print("Telegram bot is running...")
