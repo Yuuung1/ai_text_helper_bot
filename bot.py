@@ -7,7 +7,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 from text_tools import analyze_text
-from ai_client import summarize_text, extract_tasks
+from ai_client import summarize_text, extract_tasks, rewrite_business_style
 
 
 load_dotenv()
@@ -51,8 +51,9 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "Команды:\n"
         "/start — запуск бота\n"
         "/help — помощь\n"
-        "/ summary < текст > — краткое AI - резюме текста\n"
-        "/ tasks < текст > — выделить задачи, сроки и договорённости"
+        "/summary <текст> — краткое AI - резюме текста\n"
+        "/tasks <текст> — выделить задачи, сроки и договорённости\n"
+        '/business <текст> — переписать текст в деловом стиле'
     )
 
 
@@ -122,6 +123,39 @@ async def tasks_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     await update.message.reply_text(tasks)
 
 
+async def business_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    message_text = update.message.text or ""
+
+    parts = message_text.split(maxsplit=1)
+
+    if len(parts) < 2 or not parts[1].strip():
+        await update.message.reply_text(
+            "Использование:\n"
+            "/business <текст для переделывания в официальный стиль>"
+        )
+        return
+
+    user_text = parts[1].strip()
+
+    await update.message.reply_text("Переделываю текст в официальный стиль...")
+
+    try:
+        business_text = await asyncio.to_thread(rewrite_business_style, user_text)
+    except RuntimeError as error:
+        await update.message.reply_text(f"Ошибка настройки AI: {error}")
+        return
+    except Exception as error:
+        print(f"AI error: {error}")
+        await update.message.reply_text(
+            "Не удалось получить ответ от AI. Попробуй позже."
+        )
+        return
+
+    business_text = limit_telegram_message(business_text)
+
+    await update.message.reply_text(business_text)
+
+
 async def analyze_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_text = update.message.text
 
@@ -150,6 +184,7 @@ def main() -> None:
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("summary", summary_command))
     application.add_handler(CommandHandler("tasks", tasks_command))
+    application.add_handler(CommandHandler("business", business_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, analyze_text_message))
 
     print("Telegram bot is running...")

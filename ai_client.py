@@ -54,6 +54,18 @@ def build_tasks_prompt(text: str) -> str:
     )
 
 
+def build_business_style_prompt(text: str) -> str:
+    return (
+        'Перепиши текст в деловом стиле на русском языке.\n'
+        'Сохрани исходный смысл.\n'
+        'Не добавляй новых фактов.\n'
+        'Не пиши объяснений.\n'
+        'Верни только готовый вариант текста.\n'
+        "Текст для переписывания:\n"
+        f"{text}"
+    )
+
+
 def generate_ai_response(prompt: str) -> str:
     api_key = get_gemini_api_key()
 
@@ -87,6 +99,17 @@ def extract_tasks(text: str) -> str:
 
 
     prompt = build_tasks_prompt(cleaned_text)
+
+    return generate_ai_response(prompt)
+
+
+def rewrite_business_style(text: str) -> str:
+    cleaned_text = text.strip()
+
+    if not cleaned_text:
+        return "Текст для переписывания в деловом стиле пустой."
+
+    prompt = build_business_style_prompt(cleaned_text)
 
     return generate_ai_response(prompt)
 
