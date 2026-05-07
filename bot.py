@@ -1,4 +1,5 @@
 import os
+import asyncio
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -6,6 +7,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 from text_tools import analyze_text
+from ai_client import summarize_text
 
 
 load_dotenv()
@@ -22,13 +24,13 @@ def get_bot_token() -> str:
     return token
 
 
-def limit_report_length(report: str, max_length: int = 3900) -> str:
-    if len(report) <= max_length:
-        return report
+def limit_telegram_message(message_text: str, max_length: int = 3900) -> str:
+    if len(message_text) <= max_length:
+        return message_text
 
     return (
-        report[:max_length]
-        + "\n\n...Отчёт обрезан, потому что сообщение слишком длинное."
+        message_text[:max_length]
+        + "\n\n...Сообщение обрезано, потому что оно слишком длинное."
     )
 
 
@@ -48,15 +50,49 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "3. Верну отчёт со статистикой.\n\n"
         "Команды:\n"
         "/start — запуск бота\n"
-        "/help — помощь"
+        "/help — помощь\n"
+        "/ summary < текст > — краткое AI - резюме текста"
     )
+
+
+async def summary_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    message_text = update.message.text or ""
+
+    parts = message_text.split(maxsplit=1)
+
+    if len(parts) < 2 or not parts[1].strip():
+        await update.message.reply_text(
+            "Использование:\n"
+            "/summary <текст для краткого резюме>"
+        )
+        return
+
+    user_text = parts[1].strip()
+
+    await update.message.reply_text("Готовлю краткое резюме...")
+
+    try:
+        summary = await asyncio.to_thread(summarize_text, user_text)
+    except RuntimeError as error:
+        await update.message.reply_text(f"Ошибка настройки AI: {error}")
+        return
+    except Exception as error:
+        print(f"AI error: {error}")
+        await update.message.reply_text(
+            "Не удалось получить ответ от AI. Попробуй позже."
+        )
+        return
+
+    summary = limit_telegram_message(summary)
+
+    await update.message.reply_text(summary)
 
 
 async def analyze_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_text = update.message.text
 
     report = analyze_text(user_text, source_name="telegram_message")
-    report = limit_report_length(report)
+    report = limit_telegram_message(report)
 
     await update.message.reply_text(report)
 
@@ -64,10 +100,21 @@ async def analyze_text_message(update: Update, context: ContextTypes.DEFAULT_TYP
 def main() -> None:
     token = get_bot_token()
 
-    application = ApplicationBuilder().token(token).build()
+    application = (
+        ApplicationBuilder()
+        .token(token)
+        .connect_timeout(30)
+        .read_timeout(30)
+        .write_timeout(30)
+        .get_updates_connect_timeout(30)
+        .get_updates_read_timeout(30)
+        .get_updates_write_timeout(30)
+        .build()
+    )
 
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("summary", summary_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, analyze_text_message))
 
     print("Telegram bot is running...")
