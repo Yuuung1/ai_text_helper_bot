@@ -155,3 +155,18 @@ TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
 Для работы AI-функций нужен Gemini API key.
 Ключ хранится локально в .env и не коммитится в GitHub.
 Для демо можно использовать бесплатный тариф Gemini API, но для production рекомендуется использовать отдельный ключ и контролировать лимиты.
+
+## AI-суммаризация
+
+Бот поддерживает команду:
+
+```bash
+/summary <текст>
+```
+Команда отправляет текст в Gemini API и возвращает краткое резюме.
+
+Для работы AI-функций нужен ключ Gemini API в .env:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+AI_MODEL=gemini-3-flash-preview
+```
